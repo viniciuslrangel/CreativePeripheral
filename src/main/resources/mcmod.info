@@ -1,0 +1,16 @@
+[
+{
+  "modid": "CreativePeripheral",
+  "name": "Creative Peripheral",
+  "description": "ComputerCraft addon.",
+  "version": "1.0",
+  "mcversion": "1.8",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["viniciuslrangel"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
