@@ -26,7 +26,8 @@ function world.get(dimensionId)
         return p.getWorldSeed(id)
     end
     function obj:getBlock(coords)
-        return block.get(id, coords.x, coords.y, coords.z)
+        return block.get(id, vector.new(coords.x, coords.y, coords.z))
     end
 
+    return obj
 end
