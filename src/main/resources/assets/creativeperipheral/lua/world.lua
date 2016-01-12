@@ -3,13 +3,13 @@ local p = peripheral.find("Creative")
 function world.getAll()
     return p.getWorlds()
 end
-function world.get(id)
-    if type(id) ~= "number" then
+function world.get(dimensionId)
+    if type(dimensionId) ~= "number" then
         error("world.get(number id)")
     end
     local id = nil
     for k,v in pairs(world.getAll()) do
-        if v == id then
+        if v == dimensionId then
             id = v
         end
     end
