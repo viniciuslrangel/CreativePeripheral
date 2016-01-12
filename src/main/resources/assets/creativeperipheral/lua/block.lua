@@ -39,3 +39,10 @@ function block.get(dimension, coords)
 
     return obj
 end
+
+properties = {}
+function properties.new()
+    local obj = {}
+
+    return obj
+end

@@ -1,7 +1,5 @@
 package io.github.viniciuslrangel.CreativePeripheral;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import dan200.computercraft.api.filesystem.IMount;
 import dan200.computercraft.api.lua.ILuaContext;
 import dan200.computercraft.api.lua.LuaException;
@@ -9,7 +7,6 @@ import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.peripheral.IPeripheralProvider;
 import net.minecraft.block.Block;
-import net.minecraft.block.properties.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -40,17 +37,8 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
     public static final String NAME = "tileEntityCreativePeripheral";
     public static final String PERIPHERAL = "Creative";
 
-    private static final String[] methods = {"getPlayers", "getWorlds", "getWorldSeed", "getWorldTime", "isWorldBlockLoaded", "getBlock", "getAllBlocksName", "setBlock"};
+    private static final String[] methods = {"getPlayers", "getWorlds", "getWorldSeed", "getWorldTime", "isWorldBlockLoaded", "getBlock", "getAllBlocksName", "setBlock", "setBlockState", "getBlockState"};
     private static Mount mount = new Mount();
-    private static HashMap<String, Class> properties = new HashMap<>();
-    static{
-        properties.put("bool", PropertyBool.class);
-        properties.put("enum", PropertyEnum.class);
-        properties.put("int", PropertyInteger.class);
-        properties.put("direction", PropertyDirection.class);
-
-    }
-    private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @Override
     public String getType() {
@@ -124,27 +112,6 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 pos = new BlockPos(x, y, z);
                 WorldServer world = getWorld(id);
                 IBlockState blockState = world.getBlockState(pos);
-                HashMap<Object, Object> toReturn3 = new HashMap<>();
-                for(Object o:blockState.getProperties().keySet()) {
-                    IProperty prop = (IProperty) o;
-                    System.out.println(prop);
-                    if(properties.containsValue(prop.getClass())) {
-                        String v = null;
-                        for(String k:properties.keySet())
-                            if(properties.get(k) == prop.getClass())
-                                v = k;
-
-                        if(v.equals("bool"))
-                            toReturn3.put(v+":"+prop.getName(), Boolean.valueOf(blockState.getProperties().get(o).toString()));
-                        else if(v.equals("int"))
-                            toReturn3.put(v+":"+prop.getName(), Integer.valueOf(blockState.getProperties().get(o).toString()));
-                        else if(v.equals("enum"))
-                            toReturn3.put(v+":"+prop.getName()+"/"+((PropertyEnum)prop).getValueClass().getName(), String.valueOf(blockState.getProperties().get(o).toString()));
-                        else
-                            toReturn3.put(v+":"+prop.getName(), blockState.getProperties().get(o).toString());
-                    }else
-                        toReturn3.put(prop.getClass().getName()+":"+prop.getName(), String.valueOf(blockState.getProperties().get(o).toString()));
-                }
                 return new Object[]{
                         Block.blockRegistry.getNameForObject(blockState.getBlock()).toString(),
                 };
@@ -167,6 +134,32 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 Block b = Block.getBlockFromName((String) arguments[4]);
                 world.setBlockState(pos, b.getDefaultState());
                 return null;
+            case 8://setBlockState
+                if (arguments.length < 5)
+                    throw new LuaException("Usage: setBlockState(number dimensionId, number x, number y, number z, state)");
+                id = ((Double) arguments[0]).intValue();
+                x = ((Double) arguments[1]).intValue();
+                y = ((Double) arguments[2]).intValue();
+                z = ((Double) arguments[3]).intValue();
+                pos = new BlockPos(x, y, z);
+                world = getWorld(id);
+                IBlockState state = null;
+                try {
+                    state = PropertyParser.fromString(world.getBlockState(pos).getBlock(), (HashMap<Integer, HashMap<String, Object>>) arguments[4]);
+                    world.setBlockState(pos, state, 3);
+                } catch (ClassNotFoundException e) {
+                    throw new LuaException(e.getMessage());
+                }
+                return new Object[]{PropertyParser.toString(state)};
+            case 9://getBlockState
+                if (arguments.length < 4)
+                    throw new LuaException("Usage: getBlockState(number dimensionId, number x, number y, number z)");
+                id = ((Double) arguments[0]).intValue();
+                x = ((Double) arguments[1]).intValue();
+                y = ((Double) arguments[2]).intValue();
+                z = ((Double) arguments[3]).intValue();
+                pos = new BlockPos(x, y, z);
+                return new Object[]{PropertyParser.toString(getWorld(id).getBlockState(pos))};
         }
 
         return null;
@@ -186,7 +179,6 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 return world;
         return null;
     }
-
 
     @Override
     public void attach(IComputerAccess computer) {
