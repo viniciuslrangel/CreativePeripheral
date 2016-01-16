@@ -8,19 +8,25 @@ import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.peripheral.IPeripheralProvider;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.CommandResultStats;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.command.PlayerSelector;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
+import net.minecraft.nbt.JsonToNBT;
+import net.minecraft.nbt.NBTException;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.util.FakePlayerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * By viniciuslrangel
@@ -37,7 +44,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
     public static final String NAME = "tileEntityCreativePeripheral";
     public static final String PERIPHERAL = "Creative";
 
-    private static final String[] methods = {"getPlayers", "getWorlds", "getWorldSeed", "getWorldTime", "isWorldBlockLoaded", "getBlock", "getAllBlocksName", "setBlock", "setBlockState", "getBlockState"};
+    private static final String[] methods = {"getPlayers", "getWorlds", "getWorldSeed", "getWorldTime", "isWorldBlockLoaded", "getBlock", "getAllBlocksName", "setBlock", "setBlockState", "getBlockState", "getBlockNbt", "setBlockNbt", "addBlockNbt", "getEntityList", "getPlayer", "getEntityNbt", "setEntityNbt", "addEntityNbt"};
     private static Mount mount = new Mount();
 
     @Override
@@ -57,12 +64,12 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
             case 0://getPlayers
                 if (arguments.length > 1 && !(arguments[0] instanceof Boolean))
                     throw new LuaException("Usage: getPlayers([boolean uuid])");
-                HashMap<Integer, String> players = new HashMap<>();
+                HashMap<Object, String> players = new HashMap<>();
                 WorldServer[] worlds = MinecraftServer.getServer().worldServers;
                 for (WorldServer world : worlds)
                     for (Object player : world.playerEntities)
                         if (arguments.length > 0 && ((Boolean) arguments[0]))
-                            players.put(players.size() + 1, ((EntityPlayer) player).getUniqueID().toString());
+                            players.put(((EntityPlayer) player).getName() , ((EntityPlayer) player).getUniqueID().toString());
                         else
                             players.put(players.size() + 1, ((EntityPlayer) player).getName());
                 return new Object[]{players};
@@ -134,8 +141,9 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 Block b = Block.getBlockFromName((String) arguments[4]);
                 world.setBlockState(pos, b.getDefaultState());
                 return null;
-            case 8://setBlockState
-                if (arguments.length < 5)
+            case 8://setBlockState //TODO Not working
+                throw new LuaException("WIP");
+                /*if (arguments.length < 5)
                     throw new LuaException("Usage: setBlockState(number dimensionId, number x, number y, number z, state)");
                 id = ((Double) arguments[0]).intValue();
                 x = ((Double) arguments[1]).intValue();
@@ -145,12 +153,12 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 world = getWorld(id);
                 IBlockState state = null;
                 try {
-                    state = PropertyParser.fromString(world.getBlockState(pos).getBlock(), (HashMap<Integer, HashMap<String, Object>>) arguments[4]);
-                    world.setBlockState(pos, state, 3);
+                    state = PropertyParser.fromString((HashMap<Integer, HashMap<String, Object>>) arguments[4]);
+                    world.setBlockState(pos, Blocks.air.getDefaultState());
+                    return new Object[]{world.setBlockState(pos, state)};
                 } catch (ClassNotFoundException e) {
                     throw new LuaException(e.getMessage());
-                }
-                return new Object[]{PropertyParser.toString(state)};
+                }*/
             case 9://getBlockState
                 if (arguments.length < 4)
                     throw new LuaException("Usage: getBlockState(number dimensionId, number x, number y, number z)");
@@ -160,16 +168,155 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 z = ((Double) arguments[3]).intValue();
                 pos = new BlockPos(x, y, z);
                 return new Object[]{PropertyParser.toString(getWorld(id).getBlockState(pos))};
+            case 10://getBlockNbt
+                if (arguments.length < 4)
+                    throw new LuaException("Usage: getBlockNbt(number dimensionId, number x, number y, number z)");
+                id = ((Double) arguments[0]).intValue();
+                x = ((Double) arguments[1]).intValue();
+                y = ((Double) arguments[2]).intValue();
+                z = ((Double) arguments[3]).intValue();
+                pos = new BlockPos(x, y, z);
+                world = getWorld(id);
+                TileEntity te = world.getTileEntity(pos);
+                if(te == null)
+                    return new Object[]{false};
+                NBTTagCompound nbt = new NBTTagCompound();
+                te.writeToNBT(nbt);
+                return new Object[]{nbt.toString()};
+            case 11://setBlockNbt
+                if (arguments.length < 4)
+                    throw new LuaException("Usage: setBlockNbt(number dimensionId, number x, number y, number z, json nbt)");
+                id = ((Double) arguments[0]).intValue();
+                x = ((Double) arguments[1]).intValue();
+                y = ((Double) arguments[2]).intValue();
+                z = ((Double) arguments[3]).intValue();
+                pos = new BlockPos(x, y, z);
+                world = getWorld(id);
+                te = world.getTileEntity(pos);
+                if(te == null)
+                    return new Object[]{false};
+                try {
+                    te.readFromNBT(JsonToNBT.func_180713_a((String) arguments[4]));
+                } catch (NBTException e) {
+                    new LuaException("Invalid NBT:"+e.getMessage());
+                }
+                nbt = new NBTTagCompound();
+                te.writeToNBT(nbt);
+                return new Object[]{nbt.toString()};
+            case 12://addBlockNbt
+                if (arguments.length < 4)
+                    throw new LuaException("Usage: setBlockNbt(number dimensionId, number x, number y, number z, json nbt)");
+                id = ((Double) arguments[0]).intValue();
+                x = ((Double) arguments[1]).intValue();
+                y = ((Double) arguments[2]).intValue();
+                z = ((Double) arguments[3]).intValue();
+                pos = new BlockPos(x, y, z);
+                world = getWorld(id);
+                te = world.getTileEntity(pos);
+                if(te == null)
+                    return new Object[]{false};
+                nbt = new NBTTagCompound();
+                te.writeToNBT(nbt);
+                try {
+                    nbt.merge(JsonToNBT.func_180713_a((String) arguments[4]));
+                } catch (NBTException e) {
+                    new LuaException("Invalid NBT:"+e.getMessage());
+                }
+                te.readFromNBT(nbt);
+                te.writeToNBT(nbt);
+                return new Object[]{nbt.toString()};
+            case 13://getEntityList
+                if (arguments.length < 4)
+                    throw new LuaException("Usage: getEntityList(number dimensionId, number x, number y, number z, string match)");
+                id = ((Double) arguments[0]).intValue();
+                x = ((Double) arguments[1]).intValue();
+                y = ((Double) arguments[2]).intValue();
+                z = ((Double) arguments[3]).intValue();
+                world = getWorld(id);
+                List<Entity> entities = PlayerSelector.matchEntities(getCommandSender(world, new Vec3(x, y, z)), (String) arguments[4], Entity.class);
+                HashMap<String, String> t2 = new HashMap<>();
+                for(Entity entity:entities)
+                    t2.put(entity.getName(), entity.getUniqueID().toString());
+                return new Object[]{t2};
+            case 14://getPlayer
+                if(arguments.length < 1)
+                    throw new LuaException("Usage: getPlayer(nick/uuid)");
+                EntityPlayerMP player = MinecraftServer.getServer().getConfigurationManager().getPlayerByUsername((String) arguments[0]);
+                if(player == null)
+                    try {
+                        player = MinecraftServer.getServer().getConfigurationManager().getPlayerByUUID(UUID.fromString((String) arguments[0]));
+                    }catch(IllegalArgumentException e){}
+                if(player == null)
+                    return new Object[]{false};
+                HashMap<String, Object> t4 = new HashMap<>();
+                t4.put("name", player.getName());
+                t4.put("uuid", player.getUniqueID().toString());
+                t4.put("displayName", player.getDisplayNameString());
+                t4.put("health", String.valueOf(player.getHealth()));
+                t4.put("maxHealth", String.valueOf(player.getMaxHealth()));
+                HashMap<String, Double> t3 = new HashMap<>();
+                    t3.put("x", player.posX);
+                    t3.put("y", player.posY);
+                    t3.put("z", player.posZ);
+                t4.put("position", t3);
+
+                return new Object[]{t4};
+            case 15://getEntityNbt
+                if(arguments.length < 1)
+                    throw new LuaException("Usage: getEntityNbt(UUID)");
+                UUID uuid;
+                try{
+                    uuid = UUID.fromString((String) arguments[0]);
+                }catch(IllegalArgumentException e){
+                    throw new LuaException("Invalid UUID format");
+                }
+                nbt = new NBTTagCompound();
+                Entity entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
+                if(entity == null)
+                    return new Object[]{false};
+                entity.writeToNBT(nbt);
+                return new Object[]{nbt.toString()};
+            case 16://setEntityNbt
+                if(arguments.length < 2)
+                    throw new LuaException("Usage: setEntityNbt(UUID, nbt)");
+                try{
+                    uuid = UUID.fromString((String) arguments[0]);
+                }catch(IllegalArgumentException e){
+                    throw new LuaException("Invalid UUID format");
+                }
+                entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
+                if(entity == null)
+                    return new Object[]{false};
+                try {
+                    nbt = JsonToNBT.func_180713_a((String) arguments[1]);
+                } catch (NBTException e) {
+                    throw new LuaException("Invalid NBT format");
+                }
+                entity.readFromNBT(nbt);
+                return new Object[]{nbt.toString()};
+            case 17://addEntityNbt
+                if(arguments.length < 2)
+                    throw new LuaException("Usage: addEntityNbt(UUID, nbt)");
+                try{
+                    uuid = UUID.fromString((String) arguments[0]);
+                }catch(IllegalArgumentException e){
+                    throw new LuaException("Invalid UUID format");
+                }
+                entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
+                nbt = new NBTTagCompound();
+                entity.writeToNBT(nbt);
+                if(entity == null)
+                    return new Object[]{false};
+                try {
+                    nbt.merge(JsonToNBT.func_180713_a((String) arguments[1]));
+                } catch (NBTException e) {
+                    throw new LuaException("Invalid NBT format");
+                }
+                entity.readFromNBT(nbt);
+                return new Object[]{nbt.toString()};
+
         }
 
-        return null;
-    }
-
-    private EntityPlayer getPlayer(String nick) {
-        for (WorldServer world : MinecraftServer.getServer().worldServers)
-            for (Object player : world.playerEntities)
-                if (((EntityPlayer) player).getName().equalsIgnoreCase(nick))
-                    return (EntityPlayer) player;
         return null;
     }
 
@@ -178,6 +325,59 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
             if (world.provider.getDimensionId() == id)
                 return world;
         return null;
+    }
+
+    private ICommandSender getCommandSender(final WorldServer world, final Vec3 position){
+        return new ICommandSender() {
+
+            BlockPos pos = new BlockPos(position.xCoord, position.yCoord, position.zCoord);
+
+            @Override
+            public String getName() {
+                return "CreativePeripheral";
+            }
+
+            @Override
+            public IChatComponent getDisplayName() {
+                return new ChatComponentText(getName());
+            }
+
+            @Override
+            public void addChatMessage(IChatComponent message) {}
+
+            @Override
+            public boolean canUseCommand(int permLevel, String commandName) {
+                return true;
+            }
+
+            @Override
+            public BlockPos getPosition() {
+                return pos;
+            }
+
+            @Override
+            public Vec3 getPositionVector() {
+                return position;
+            }
+
+            @Override
+            public World getEntityWorld() {
+                return world;
+            }
+
+            @Override
+            public Entity getCommandSenderEntity() {
+                return FakePlayerFactory.getMinecraft(world);
+            }
+
+            @Override
+            public boolean sendCommandFeedback() {
+                return false;
+            }
+
+            @Override
+            public void setCommandStat(CommandResultStats.Type type, int amount) {}
+        };
     }
 
     @Override
@@ -216,16 +416,19 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
         public Mount() {
             files = new ArrayList<>();
             try {
+
                 Path main = Paths.get(getClass().getResource(PATH).toURI());
 
-                try (DirectoryStream<Path> directory = Files.newDirectoryStream(main)) {
+                try{
+                    DirectoryStream<Path> directory = Files.newDirectoryStream(main);
                     for (Path file : directory) {
                         files.add(file.getFileName().toString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            } catch (URISyntaxException e) {
+            } catch (Exception e) {
+                System.out.println("Error mounting Creative Peripheral Lua APIs");
                 e.printStackTrace();
             }
         }

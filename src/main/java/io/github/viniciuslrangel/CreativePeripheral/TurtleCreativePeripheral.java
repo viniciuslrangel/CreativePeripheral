@@ -2,10 +2,15 @@ package io.github.viniciuslrangel.CreativePeripheral;
 
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.turtle.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.resources.model.IBakedModel;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.vecmath.Matrix4f;
@@ -51,9 +56,10 @@ public class TurtleCreativePeripheral implements ITurtleUpgrade {
     }
 
     @SuppressWarnings("deprecation")
+    @SideOnly(Side.CLIENT)
     @Override
     public Pair<IBakedModel, Matrix4f> getModel(ITurtleAccess turtle, TurtleSide side) { //TODO Model
-        return null;
+        return Pair.of(Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(Blocks.carpet, 1, 15)), null);
     }
 
     @Override
