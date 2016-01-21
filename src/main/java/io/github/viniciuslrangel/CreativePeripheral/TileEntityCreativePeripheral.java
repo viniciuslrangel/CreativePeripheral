@@ -196,7 +196,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 if (te == null)
                     return new Object[]{false};
                 try {
-                    te.readFromNBT(JsonToNBT.func_180713_a((String) arguments[4]));
+                    te.readFromNBT(NbtParser.toNbt((HashMap<Object, Object>) arguments[4]));
                 } catch (NBTException e) {
                     new LuaException("Invalid NBT:" + e.getMessage());
                 }
@@ -218,7 +218,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 nbt = new NBTTagCompound();
                 te.writeToNBT(nbt);
                 try {
-                    nbt.merge(JsonToNBT.func_180713_a((String) arguments[4]));
+                    nbt.merge(NbtParser.toNbt((HashMap<Object, Object>) arguments[4]));
                 } catch (NBTException e) {
                     new LuaException("Invalid NBT:" + e.getMessage());
                 }
@@ -226,14 +226,24 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 te.writeToNBT(nbt);
                 return new Object[]{NbtParser.fromNbt(nbt)};
             case 13://getEntityList
-                if (arguments.length < 4)
-                    throw new LuaException("Usage: getEntityList(number dimensionId, number x, number y, number z, string match)");
-                id = ((Double) arguments[0]).intValue();
-                x = ((Double) arguments[1]).intValue();
-                y = ((Double) arguments[2]).intValue();
-                z = ((Double) arguments[3]).intValue();
+                if (arguments.length != 4 && arguments.length != 1)
+                    throw new LuaException("Usage: getEntityList([number dimensionId, number x, number y, number z,] string match)");
+                String match;
+                if (arguments.length == 4) {
+                    id = ((Double) arguments[0]).intValue();
+                    x = ((Double) arguments[1]).intValue();
+                    y = ((Double) arguments[2]).intValue();
+                    z = ((Double) arguments[3]).intValue();
+                    match = (String) arguments[4];
+                } else {
+                    id = 0;
+                    x = 0;
+                    y = 0;
+                    z = 0;
+                    match = (String) arguments[0];
+                }
                 world = getWorld(id);
-                List<Entity> entities = PlayerSelector.matchEntities(getCommandSender(world, new Vec3(x, y, z)), (String) arguments[4], Entity.class);
+                List<Entity> entities = PlayerSelector.matchEntities(getCommandSender(world, new Vec3(x, y, z)), match, Entity.class);
                 HashMap<Integer, String> t2 = new HashMap<>();
                 for (Entity entity : entities)
                     t2.put(t2.size() + 1, entity.getUniqueID().toString());
@@ -289,7 +299,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 if (entity == null)
                     return new Object[]{false};
                 try {
-                    nbt = JsonToNBT.func_180713_a((String) arguments[1]); //TODO Java Json(Minecraft style :/ ) parser
+                    nbt = NbtParser.toNbt((HashMap<Object, Object>) arguments[1]); //TODO Java Json(Minecraft style :/ ) parser
                 } catch (NBTException e) {
                     throw new LuaException("Invalid NBT format");
                 }
@@ -309,7 +319,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 if (entity == null)
                     return new Object[]{false};
                 try {
-                    nbt.merge(JsonToNBT.func_180713_a((String) arguments[1]));
+                    nbt.merge(NbtParser.toNbt((HashMap<Object, Object>) arguments[1]));
                 } catch (NBTException e) {
                     throw new LuaException("Invalid NBT format");
                 }

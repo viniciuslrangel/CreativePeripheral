@@ -20,9 +20,9 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
-version = "1.0"
+version = "0.3.0"
 group= "io.github.viniciuslrangel"
-archivesBaseName = "CreativePeripheral"
+archivesBaseName = "CreativePeripheral.mc.1.8"
 
 minecraft {
     version = "1.8-11.14.4.1563"
