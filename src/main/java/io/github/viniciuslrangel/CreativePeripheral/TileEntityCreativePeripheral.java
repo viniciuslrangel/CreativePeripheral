@@ -44,7 +44,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
     public static final String NAME = "tileEntityCreativePeripheral";
     public static final String PERIPHERAL = "Creative";
 
-    private static final String[] methods = {"getPlayers", "getWorlds", "getWorldSeed", "getWorldTime", "isWorldBlockLoaded", "getBlock", "getAllBlocksName", "setBlock", "setBlockState", "getBlockState", "getBlockNbt", "setBlockNbt", "addBlockNbt", "getEntityList", "getPlayer", "getEntityNbt", "setEntityNbt", "addEntityNbt"};
+    private static final String[] methods = {"getPlayers", "getWorlds", "getWorldSeed", "getWorldTime", "isWorldBlockLoaded", "getBlock", "getAllBlocksName", "setBlock", "setBlockState", "getBlockState", "getBlockNbt", "setBlockNbt", "addBlockNbt", "getEntityList", "getPlayer", "getEntityNbt", "setEntityNbt", "addEntityNbt", "setEntityPosition", "setEntityRotation", "setEntityVelocity"};
     private static Mount mount = new Mount();
 
     @Override
@@ -140,7 +140,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 world = getWorld(((Double) arguments[0]).intValue());
                 Block b = Block.getBlockFromName((String) arguments[4]);
                 world.setBlockState(pos, b.getDefaultState());
-                return null;
+                break;
             case 8://setBlockState //TODO Not working
                 throw new LuaException("WIP");
                 /*if (arguments.length < 5)
@@ -325,6 +325,66 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 }
                 entity.readFromNBT(nbt);
                 return new Object[]{NbtParser.fromNbt(nbt)};
+            case 18://setEntityPosition
+                if(arguments.length < 5)
+                    throw new LuaException("Usage: setEntityPosition(UUID, boolean relative, number x, number y, number z");
+                try {
+                    uuid = UUID.fromString((String) arguments[0]);
+                } catch (IllegalArgumentException e) {
+                    throw new LuaException("Invalid UUID format");
+                }
+                boolean relative = (boolean) arguments[1];
+                double xd = (Double) arguments[2];
+                double yd = (Double) arguments[3];
+                double zd = (Double) arguments[4];
+                entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
+                if(relative){
+                    xd += entity.posX;
+                    yd += entity.posY;
+                    zd += entity.posZ;
+                }
+                entity.setPositionAndUpdate(xd, yd, zd);
+                break;
+            case 19://setEntityRotation
+                if(arguments.length < 5)
+                    throw new LuaException("Usage: setEntityRotation(UUID, boolean relative, number yaw, number pitch");
+                try {
+                    uuid = UUID.fromString((String) arguments[0]);
+                } catch (IllegalArgumentException e) {
+                    throw new LuaException("Invalid UUID format");
+                }
+                relative = (boolean) arguments[1];
+                float yaw = ((Double) arguments[2]).floatValue();
+                float pitch = ((Double) arguments[3]).floatValue();
+                entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
+                if(relative){
+                    yaw += entity.rotationYaw;
+                    pitch += entity.rotationPitch;
+                }
+                entity.setPositionAndRotation(entity.posX, entity.posY, entity.posZ, yaw, pitch);
+                break;
+            case 20://setEntityVelocity
+                if(arguments.length < 5)
+                    throw new LuaException("Usage: setEntityVelocity(UUID, boolean relative, number x, number y, number z");
+                try {
+                    uuid = UUID.fromString((String) arguments[0]);
+                } catch (IllegalArgumentException e) {
+                    throw new LuaException("Invalid UUID format");
+                }
+                relative = (boolean) arguments[1];
+                xd = ((Double) arguments[2]);
+                yd = ((Double) arguments[3]);
+                zd = ((Double) arguments[4]);
+                entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
+                if(relative){
+                    xd += entity.motionX;
+                    yd += entity.motionY;
+                    zd += entity.motionZ;
+                }
+                entity.motionX = xd;
+                entity.motionY = yd;
+                entity.motionZ = zd;
+                break;
 
         }
 
