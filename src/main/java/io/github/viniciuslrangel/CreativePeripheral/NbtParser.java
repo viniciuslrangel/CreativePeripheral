@@ -53,7 +53,10 @@ public class NbtParser {
                     main.put(key, c);
                     break;
                 case 8:
-                    c.put("value", nbt.getTag(key).toString());
+                    String v = nbt.getTag(key).toString();
+                    if(v.matches("\".*\""))
+                        v = v.substring(1, v.length()-1);
+                    c.put("value", v);
                     main.put(key, c);
                     break;
                 case 9:
@@ -79,8 +82,9 @@ public class NbtParser {
         return main;
     }
 
-    public static HashMap<Integer, Object> fromNbtTagList(NBTTagList nbt) {
-        HashMap<Integer, Object> main = new HashMap<>();
+    public static HashMap<Object, Object> fromNbtTagList(NBTTagList nbt) {
+        HashMap<Object, Object> main = new HashMap<>();
+        main.put("valueType", nbt.getTagType());
         for (int i = 1; i < nbt.tagCount() + 1; i++) {
             NBTBase n = nbt.get(i - 1);
             switch (nbt.getTagType()) {
@@ -113,7 +117,10 @@ public class NbtParser {
                     main.put(main.size() + 1, values);
                     break;
                 case 8:
-                    main.put(main.size() + 1, n.toString());
+                    String v = n.toString();
+                    if(v.matches("\".*\""))
+                        v = v.substring(1, v.length()-1);
+                    main.put(main.size() + 1, v);
                     break;
                 case 9:
                     main.put(main.size() + 1, fromNbtTagList((NBTTagList) n));
@@ -136,6 +143,8 @@ public class NbtParser {
     public static NBTTagCompound toNbt(HashMap<Object, Object> table) throws NBTException {
         NBTTagCompound nbt = new NBTTagCompound();
         for (Map.Entry<Object, Object> entry : table.entrySet()) {
+            if (entry.getKey().equals("type"))
+                continue;
             String key = String.valueOf(entry.getKey());
             HashMap<Object, Object> values = (HashMap<Object, Object>) entry.getValue();
             switch (((Double) values.get("type")).intValue()) {
@@ -164,22 +173,27 @@ public class NbtParser {
                     byte[] list2 = new byte[values.size()];
                     for (Object key3 : values.keySet()) {
                         Double key2 = (Double) key3;
-                        list2[key2.intValue()] = ((Double)values.get(key2.intValue())).byteValue();
+                        list2[key2.intValue()] = ((Double) values.get(key2.intValue())).byteValue();
                     }
                     nbt.setTag(key, new NBTTagByteArray(list2));
                     break;
                 case 8:
-                    nbt.setTag(key, new NBTTagString((String) entry.getValue()));
+                    nbt.setTag(key, new NBTTagString((String) values.get("value")));
                     break;
                 case 9:
-                    HashMap<Object, Object> subList = (HashMap<Object, Object>) entry.getValue();
-                    nbt.setTag(key, toNbtList((HashMap<Double, Object>) subList.get("value"), ((Double) subList.get("valueType")).byteValue()));
+                    HashMap<Object, Object> subList = (HashMap<Object, Object>) values.get("value"); //NULL Pointer exception
+                    byte typ = ((Double) subList.get("valueType")).byteValue();
+                    subList.remove("valueType");
+                    if (subList.size() > 1)
+                        nbt.setTag(key, toNbtList(subList, typ));
+                    else
+                        nbt.setTag(key, new NBTTagList());
                     break;
                 case 10:
-                    nbt.setTag(key, toNbt((HashMap<Object, Object>) entry.getValue()));
+                    nbt.setTag(key, toNbt((HashMap<Object, Object>) values.get("value")));
                     break;
                 case 11:
-                    HashMap<Double, Double> values3 = (HashMap<Double, Double>) entry.getValue();
+                    HashMap<Double, Double> values3 = (HashMap<Double, Double>) values.get("value");
                     int[] list = new int[values3.size()];
                     for (Double key2 : values3.keySet())
                         list[key2.intValue()] = values3.get(key2.intValue()).intValue();
@@ -190,57 +204,63 @@ public class NbtParser {
         return nbt;
     }
 
-    public static NBTTagList toNbtList(HashMap<Double, Object> table, byte type) throws NBTException {
+    public static NBTTagList toNbtList(HashMap<Object, Object> table, byte type) throws NBTException {
         NBTTagList nbt = new NBTTagList();
-        for (Map.Entry<Double, Object> entry : table.entrySet()) {
-            switch (type) {
-                case 0:
-                    nbt.appendTag(new NBTTagEnd());
-                    break;
-                case 1:
-                    nbt.appendTag(new NBTTagByte(((Double) entry.getValue()).byteValue()));
-                    break;
-                case 2:
-                    nbt.appendTag(new NBTTagShort(((Double) entry.getValue()).shortValue()));
-                    break;
-                case 3:
-                    nbt.appendTag(new NBTTagInt(((Double) entry.getValue()).intValue()));
-                    break;
-                case 4:
-                    nbt.appendTag(new NBTTagLong(((Double) entry.getValue()).longValue()));
-                    break;
-                case 5:
-                    nbt.appendTag(new NBTTagFloat(((Double) entry.getValue()).floatValue()));
-                    break;
-                case 6:
-                    nbt.appendTag(new NBTTagDouble((Double) entry.getValue()));
-                    break;
-                case 7:
-                    HashMap<Double, Double> values2 = (HashMap<Double, Double>) entry.getValue();
-                    byte[] list2 = new byte[values2.size()];
-                    for (Double key : values2.keySet())
-                        list2[key.intValue()] = values2.get(key.intValue()).byteValue();
-                    nbt.appendTag(new NBTTagByteArray(list2));
-                    break;
-                case 8:
-                    nbt.appendTag(new NBTTagString((String) entry.getValue()));
-                    break;
-                case 9:
-                    HashMap<Object, Object> subList = (HashMap<Object, Object>) entry.getValue();
-                    nbt.appendTag(toNbtList((HashMap<Double, Object>) subList.get("value"), ((Double) subList.get("valueType")).byteValue()));
-                    break;
-                case 10:
-                    nbt.appendTag(toNbt((HashMap<Object, Object>) entry.getValue()));
-                    break;
-                case 11:
-                    HashMap<Double, Double> values = (HashMap<Double, Double>) entry.getValue();
-                    int[] list = new int[values.size()];
-                    for (Double key : values.keySet())
-                        list[key.intValue()] = values.get(key.intValue()).intValue();
-                    nbt.appendTag(new NBTTagIntArray(list));
-                    break;
+        if (table.size() > 0)
+            for (Map.Entry<Object, Object> entry : table.entrySet()) {
+                switch (type) {
+                    case 0:
+                        nbt.appendTag(new NBTTagEnd());
+                        break;
+                    case 1:
+                        nbt.appendTag(new NBTTagByte(((Double) entry.getValue()).byteValue()));
+                        break;
+                    case 2:
+                        nbt.appendTag(new NBTTagShort(((Double) entry.getValue()).shortValue()));
+                        break;
+                    case 3:
+                        nbt.appendTag(new NBTTagInt(((Double) entry.getValue()).intValue()));
+                        break;
+                    case 4:
+                        nbt.appendTag(new NBTTagLong(((Double) entry.getValue()).longValue()));
+                        break;
+                    case 5:
+                        nbt.appendTag(new NBTTagFloat(((Double) entry.getValue()).floatValue()));
+                        break;
+                    case 6:
+                        nbt.appendTag(new NBTTagDouble((Double) entry.getValue()));
+                        break;
+                    case 7:
+                        HashMap<Double, Double> values2 = (HashMap<Double, Double>) entry.getValue();
+                        byte[] list2 = new byte[values2.size()];
+                        for (Double key : values2.keySet())
+                            list2[key.intValue()] = values2.get(key.intValue()).byteValue();
+                        nbt.appendTag(new NBTTagByteArray(list2));
+                        break;
+                    case 8:
+                        nbt.appendTag(new NBTTagString((String) entry.getValue()));
+                        break;
+                    case 9:
+                        HashMap<Object, Object> subList = (HashMap<Object, Object>) ((HashMap<Object, Object>) entry.getValue()).get("value"); //NULL Pointer exception
+                        byte typ = ((Double) subList.get("valueType")).byteValue();
+                        subList.remove("valueType");
+                        if (subList.size() > 1)
+                            nbt.appendTag(toNbtList(subList, typ));
+                        else
+                            nbt.appendTag(new NBTTagList());
+                        break;
+                    case 10:
+                        nbt.appendTag(toNbt((HashMap<Object, Object>) entry.getValue()));
+                        break;
+                    case 11:
+                        HashMap<Double, Double> values = (HashMap<Double, Double>) entry.getValue();
+                        int[] list = new int[values.size()];
+                        for (Double key : values.keySet())
+                            list[key.intValue()] = values.get(key.intValue()).intValue();
+                        nbt.appendTag(new NBTTagIntArray(list));
+                        break;
+                }
             }
-        }
 
         return nbt;
     }

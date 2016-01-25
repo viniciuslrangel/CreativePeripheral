@@ -60,6 +60,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
     @SuppressWarnings("null")
     @Override
     public Object[] callMethod(IComputerAccess computer, ILuaContext context, int method, Object[] arguments) throws LuaException, InterruptedException {
+//        try { //Used for tests
         switch (method) {
             case 0://getPlayers
                 if (arguments.length > 1 && !(arguments[0] instanceof Boolean))
@@ -326,7 +327,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 entity.readFromNBT(nbt);
                 return new Object[]{NbtParser.fromNbt(nbt)};
             case 18://setEntityPosition
-                if(arguments.length < 5)
+                if (arguments.length < 5)
                     throw new LuaException("Usage: setEntityPosition(UUID, boolean relative, number x, number y, number z");
                 try {
                     uuid = UUID.fromString((String) arguments[0]);
@@ -338,7 +339,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 double yd = (Double) arguments[3];
                 double zd = (Double) arguments[4];
                 entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
-                if(relative){
+                if (relative) {
                     xd += entity.posX;
                     yd += entity.posY;
                     zd += entity.posZ;
@@ -346,7 +347,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 entity.setPositionAndUpdate(xd, yd, zd);
                 break;
             case 19://setEntityRotation
-                if(arguments.length < 5)
+                if (arguments.length < 5)
                     throw new LuaException("Usage: setEntityRotation(UUID, boolean relative, number yaw, number pitch");
                 try {
                     uuid = UUID.fromString((String) arguments[0]);
@@ -357,14 +358,14 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 float yaw = ((Double) arguments[2]).floatValue();
                 float pitch = ((Double) arguments[3]).floatValue();
                 entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
-                if(relative){
+                if (relative) {
                     yaw += entity.rotationYaw;
                     pitch += entity.rotationPitch;
                 }
                 entity.setPositionAndRotation(entity.posX, entity.posY, entity.posZ, yaw, pitch);
                 break;
             case 20://setEntityVelocity
-                if(arguments.length < 5)
+                if (arguments.length < 5)
                     throw new LuaException("Usage: setEntityVelocity(UUID, boolean relative, number x, number y, number z");
                 try {
                     uuid = UUID.fromString((String) arguments[0]);
@@ -376,7 +377,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 yd = ((Double) arguments[3]);
                 zd = ((Double) arguments[4]);
                 entity = MinecraftServer.getServer().getEntityFromUuid(uuid);
-                if(relative){
+                if (relative) {
                     xd += entity.motionX;
                     yd += entity.motionY;
                     zd += entity.motionZ;
@@ -387,7 +388,9 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 break;
 
         }
-
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
         return null;
     }
 
