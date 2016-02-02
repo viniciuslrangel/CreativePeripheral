@@ -7,6 +7,7 @@ import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.peripheral.IPeripheralProvider;
 import net.minecraft.block.Block;
+import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandResultStats;
 import net.minecraft.command.ICommandSender;
@@ -477,9 +478,9 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
         @Override
         public IPeripheral getPeripheral(World world, BlockPos pos, EnumFacing side) {
             TileEntity te = world.getTileEntity(pos);
-            if (te instanceof TileEntityCreativePeripheral) {
-                return (IPeripheral) te;
-            }
+            if (te instanceof TileEntityCreativePeripheral && world.getBlockState(pos).getBlock() == CreativePeripheral.creativePeripheral.blockCreativePeripheral)
+                if(((EnumFacing)world.getBlockState(pos).getValue(BlockCreativePeripheral.DIRECTION)).getOpposite() == side)
+                    return (IPeripheral) te;
             return null;
         }
     }

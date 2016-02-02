@@ -1,5 +1,33 @@
 {
-	"variants": {
-		"normal": { "model": "CreativePeripheral:BlockCreativePeripheral" }
-	}
+  "variants": {
+    "normal": {
+      "model": "CreativePeripheral:BlockCreativePeripheral"
+    },
+    "direction=down": {
+      "model": "CreativePeripheral:BlockCreativePeripheral",
+      "x": 180
+    },
+    "direction=up": {
+      "model": "CreativePeripheral:BlockCreativePeripheral"
+    },
+    "direction=south": {
+      "model": "CreativePeripheral:BlockCreativePeripheral",
+      "x": 270
+    },
+    "direction=east": {
+      "model": "CreativePeripheral:BlockCreativePeripheral",
+      "y": 270,
+      "x": 270
+    },
+    "direction=west": {
+      "model": "CreativePeripheral:BlockCreativePeripheral",
+      "y": 90,
+      "x": 270
+    },
+    "direction=north": {
+      "model": "CreativePeripheral:BlockCreativePeripheral",
+      "y": 180,
+      "x": 270
+    }
+  }
 }
