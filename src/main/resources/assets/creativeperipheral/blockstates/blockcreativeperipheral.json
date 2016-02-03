@@ -1,5 +1,9 @@
 {
   "variants": {
+    "inventory": {
+      "model": "CreativePeripheral:BlockCreativePeripheral",
+      "x": 180
+    },
     "normal": {
       "model": "CreativePeripheral:BlockCreativePeripheral"
     },
