@@ -1,5 +1,6 @@
 package io.github.viniciuslrangel.CreativePeripheral;
 
+import dan200.computercraft.api.ComputerCraftAPI;
 import dan200.computercraft.api.filesystem.IMount;
 import dan200.computercraft.api.lua.ILuaContext;
 import dan200.computercraft.api.lua.LuaException;
@@ -45,7 +46,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
     public static final String NAME = "tileEntityCreativePeripheral";
     public static final String PERIPHERAL = "Creative";
 
-    private static final String[] methods = {"getPlayers", "getWorlds", "getWorldSeed", "getWorldTime", "isWorldBlockLoaded", "getBlock", "getAllBlocksName", "setBlock", "setBlockState", "getBlockState", "getBlockNbt", "setBlockNbt", "addBlockNbt", "getEntityList", "getPlayer", "getEntityNbt", "setEntityNbt", "addEntityNbt", "setEntityPosition", "setEntityRotation", "setEntityVelocity"};
+    private static final String[] methods = {"getPlayers", "getWorlds", "getWorldSeed", "getWorldTime", "isWorldBlockLoaded", "getBlock", "getAllBlocksName", "setBlock", "setBlockState", "getBlockState", "getBlockNbt", "setBlockNbt", "addBlockNbt", "getEntityList", "getPlayer", "getEntityNbt", "setEntityNbt", "addEntityNbt", "setEntityPosition", "setEntityRotation", "setEntityVelocity", "getPeripheralPosition"};
     private static Mount mount = new Mount();
 
     @Override
@@ -387,7 +388,13 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 entity.motionY = yd;
                 entity.motionZ = zd;
                 break;
-
+            case 21://getPeripheralPosition
+                HashMap<Integer, Integer> toReturn3 = new HashMap<>();
+                BlockPos pos = getPos();
+                toReturn3.put(1, pos.getX());
+                toReturn3.put(2, pos.getY());
+                toReturn3.put(3, pos.getZ());
+                return new Object[]{toReturn3};
         }
 //        } catch (Exception e) {
 //            e.printStackTrace();

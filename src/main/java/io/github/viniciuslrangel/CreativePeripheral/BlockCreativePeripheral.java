@@ -11,10 +11,12 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Vec3i;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 import java.lang.reflect.Field;
+import java.util.Random;
 
 /**
  * By viniciuslrangel
@@ -98,5 +100,13 @@ public class BlockCreativePeripheral extends Block implements ITileEntityProvide
     @Override
     public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
         return blockState.getBaseState().withProperty(DIRECTION, facing);
+    }
+
+    @Override
+    public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
+        Vec3i d = ((EnumFacing)state.getValue(DIRECTION)).getOpposite().getDirectionVec();
+        BlockPos pos1 = new BlockPos(pos.getX()+d.getX(), pos.getY()+d.getY(), pos.getZ()+d.getZ());
+        if(worldIn.isAirBlock(pos1))
+            worldIn.destroyBlock(pos, true);
     }
 }
