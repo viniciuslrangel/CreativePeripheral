@@ -2,11 +2,15 @@ package io.github.viniciuslrangel.CreativePeripheral;
 
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.turtle.*;
+import net.minecraft.block.state.BlockState;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelRenderer;
+import net.minecraft.client.renderer.BlockModelShapes;
 import net.minecraft.client.resources.model.IBakedModel;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
@@ -59,7 +63,16 @@ public class TurtleCreativePeripheral implements ITurtleUpgrade {
     @SideOnly(Side.CLIENT)
     @Override
     public Pair<IBakedModel, Matrix4f> getModel(ITurtleAccess turtle, TurtleSide side) { //TODO Model
-        return Pair.of(Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(new ItemStack(Blocks.carpet, 1, 15)), null);
+        BlockCreativePeripheral block = CreativePeripheral.creativePeripheral.blockCreativePeripheral;
+        IBlockState s = block.getDefaultState();
+        s = s.withProperty(BlockCreativePeripheral.DIRECTION, side == TurtleSide.Right ? EnumFacing.WEST : EnumFacing.EAST);
+        return Pair.of(Minecraft.getMinecraft().getBlockRendererDispatcher().getModelFromBlockState(s, turtle.getWorld(), BlockPos.ORIGIN),
+                new Matrix4f(-1f, 0f ,0f ,0f,
+                            0f, 0f, 0f, 0f,
+                            0f, 0f, 0f, 0f,
+                            0f, 0f, 0f, 0f
+                )
+        );
     }
 
     @Override

@@ -302,7 +302,7 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
                 if (entity == null)
                     return new Object[]{false};
                 try {
-                    nbt = NbtParser.toNbt((HashMap<Object, Object>) arguments[1]); //TODO Java Json(Minecraft style :/ ) parser
+                    nbt = NbtParser.toNbt((HashMap<Object, Object>) arguments[1]);
                 } catch (NBTException e) {
                     throw new LuaException("Invalid NBT format");
                 }
@@ -425,11 +425,10 @@ public class TileEntityCreativePeripheral extends TileEntity implements IPeriphe
             }
 
             @Override
-            public void addChatMessage(IChatComponent message) {
-            }
+            public void addChatMessage(IChatComponent message) {}
 
             @Override
-            public boolean canUseCommand(int permLevel, String commandName) {
+            public boolean canCommandSenderUseCommand(int permLevel, String commandName) {
                 return true;
             }
 

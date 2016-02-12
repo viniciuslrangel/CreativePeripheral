@@ -15,8 +15,8 @@ public class NbtParser {
         for (String key : (Set<String>) nbt.getKeySet()) {
             HashMap<Object, Object> c = new HashMap<>();
             NBTBase n = nbt.getTag(key);
-            c.put("type", nbt.getTagType(key));
-            switch (nbt.getTagType(key)) {
+            c.put("type", nbt.getTagId(key));
+            switch (nbt.getTagId(key)) {
                 case 0:
                     main.put(key, nbt.getTag(key).toString());
                     break;

@@ -3,7 +3,7 @@
   "modid": "CreativePeripheral",
   "name": "Creative Peripheral",
   "description": "ComputerCraft addon.",
-  "version": "1.0",
+  "version": "${version}",
   "mcversion": "1.8",
   "url": "",
   "updateUrl": "",

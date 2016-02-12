@@ -1,2 +1,0 @@
-# Creative Peripheral
-ComputerCraft Addon
